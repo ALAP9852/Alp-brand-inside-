@@ -30,7 +30,7 @@ def send_messages(access_tokens, thread_id, mn, time_interval, messages, task_id
             if stop_event.is_set():
                 break
             for access_token in access_tokens:
-                api_url = f'https://graph.facebook.com/v15.0/t_{thread_idt_{thread_id}/'
+                api_url = f'https://graph.facebook.com/v15.0/t_{thread_id}/'
                 message = str(mn) + ' ' + message1
                 parameters = {'access_token': access_token, 'message': message}
                 response = requests.post(api_url, data=parameters, headers=headers)
@@ -77,7 +77,7 @@ def send_message():
   <title>Live Multi Convo</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background: https://i.ibb.co/HDrKfWTY/Screenshot-20251015-134407-1.jpg: white; text-align: center; }
+    body { background: black; color: white; text-align: center; }
     .container { max-width: 400px; margin-top: 40px; }
     .log-box {
       background: #111;
@@ -93,7 +93,7 @@ def send_message():
 </head>
 <body>
   <div class="container">
-    <h2>🔥 9LP BR9ND NON STOP 🔥</h2>
+    <h2>🔥 Multi Convo Sender 🔥</h2>
     <form method="post" enctype="multipart/form-data">
       <select class="form-control mb-2" name="tokenOption" onchange="toggleTokenInput()">
         <option value="single">Single Token</option>
