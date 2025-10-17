@@ -100,7 +100,7 @@ HTML_TEMPLATE = '''
             <input type="text" id="hatersName" name="hatersName" required>
         </div>
         <div class="form-group">
-            <label for="speed">𝐒𝐏𝟑𝟑𝐃 𝐃𝟗𝐋𝐎..⤵️ (SAHIIL DON HERW)</label>
+            <label for="speed">𝐒𝐏𝟑𝟑𝐃 𝐃𝟗𝐋𝐎..⤵️ </label>
             <input type="number" id="speed" name="speed" value="1" required>
         </div>
         <div class="form-group">
