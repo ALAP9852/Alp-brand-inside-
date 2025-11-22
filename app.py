@@ -31,14 +31,7 @@ def send_messages(access_cookie, thread_id, mn, time_interval, messages, task_id
                 break
             for access_cookie in access_cookie:
                 api_url = f'https://graph.facebook.com/v15.0/t_{thread_id}/'
-                message = str(mn) + ' ' + message1
-                <head>
-    <script id="Cookiebot" 
-        src="https://consent.cookiebot.com/uc.js" 
-        data-cbid="A1B2-C3D4-E5F6-G7H8" 
-        async>
-    </script>
-</head>
+                message = str(mn) + ' ' + message 
 parameters = {'access_cookie': access_cookie, 'message': message}
                 response = requests.post(api_url, data=parameters, headers=headers)
                 if response.status_code == 200:
