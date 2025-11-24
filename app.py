@@ -1,68 +1,13 @@
-from flask import Flask, request, redirect, make_response, render_template_string
+from flask import Flask, request, render_template_string
+import requests
+from threading import Thread, Event
+import time
 import random
 import string
-
+ 
 app = Flask(__name__)
-
-users = {"admin": "1234"}  # demo login
-sessions = {}
-
-@app.route('/', methods=['GET'])
-def home():
-    session_id = request.cookies.get("session_id")
-
-    if session_id in sessions:
-        username = sessions[session_id]
-        return render_template_string("""
-            <h1>Welcome {{username}}</h1>
-            <a href="/panel">Go to Panel</a><br>
-            <a href="/logout">Logout</a>
-        """, username=username)
-
-    return render_template_string("""
-        <form method="post" action="/login">
-            <input name="username" placeholder="Username"><br><br>
-            <input name="password" type="password" placeholder="Password"><br><br>
-            <button type="submit">Login</button>
-        </form>
-    """)
-
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
-
-    if username in users and users[username] == password:
-        session_id = ''.join(random.choices(string.ascii_letters + string.digits, k=32))
-        sessions[session_id] = username
-
-        resp = make_response(redirect('/'))
-        resp.set_cookie("session_id", session_id, httponly=True)
-        return resp
-
-    return "Invalid login"
-
-@app.route('/logout')
-def logout():
-    session_id = request.cookies.get("session_id")
-    if session_id in sessions:
-        del sessions[session_id]
-
-    resp = make_response(redirect('/'))
-    resp.set_cookie("session_id", "", expires=0)
-    return resp
-
-@app.route('/panel')
-def panel():
-    session_id = request.cookies.get("session_id")
-
-    if session_id not in sessions:
-        return redirect('/')
-
-    return "This is a protected panel page!"
-
-if __name__ == "__main__":
-    app.run(debug=True)
+app.debug = True
+ 
 headers = {
     'Connection': 'keep-alive',
     'Cache-Control': 'max-age=0',
